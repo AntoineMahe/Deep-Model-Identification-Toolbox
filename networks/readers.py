@@ -12,7 +12,7 @@ class H5Reader:
     This object prepares the data (Nomalizes, removes time-stamps, and
     continuity idx), and split it using the settings chosen by the user.
     Since we aim to apply our models to MPC, our models will be
-    evaluated on multistep predictions (build on their predictions) 
+    evaluated on multistep predictions (build on their predictions)
     hence this reader also generates trajectories.
     """
     def __init__(self, settings):
@@ -27,12 +27,12 @@ class H5Reader:
         self.test_y = None
         self.val_x = None
         self.val_y = None
-        
+
         self.test_traj_x = None
         self.test_traj_y = None
         self.test_val_x = None
         self.test_val_y = None
-        
+
         self.load_data()
 
     def remove_ts(self, data):
@@ -60,12 +60,12 @@ class H5Reader:
             x: the same vector but normalized [N x Sequence_size x Input_size]
         """
         return (x - self.mean) / self.std
-    
+
     def norm_pred(self, y):
         """
         Normalizes the predictions or target: the ouput of the network
         The normalization is done using the formula (Y-MEAN)/STD, where Y is the data,
-        MEAN the average value for each variables and STD the standard deviation 
+        MEAN the average value for each variables and STD the standard deviation
         for each variables.
         Input:
             y: a vector of predictions [N x Forecast_size xOutput_size]
@@ -85,7 +85,7 @@ class H5Reader:
             val_x   : input validation values [Val_size x Sequence_size x Input_size]
             val_y   : output validation values [Val_size x Forecast_size x Output_size]
             test_traj_x : input test trajectories values [Test_size x Trajectory_size + Sequence_size x Input_size]
-            test_traj_y : output test trajectories values [Test_size x Trajectory_size x Output_size] 
+            test_traj_y : output test trajectories values [Test_size x Trajectory_size x Output_size]
             val_traj_x  : input val trajectories values [Val_size x Trajectory_size + Sequence_size x Input_size]
             val_traj_y  : output val trajectories values [Val_size x Trajectory_size x Output_size]
         Output:
@@ -96,14 +96,14 @@ class H5Reader:
         self.std = np.mean(np.std(train_x, axis=0), axis=0)
 
         self.train_x     = self.norm_state(train_x)
-        self.test_x      = self.norm_state(test_x)     
-        self.val_x       = self.norm_state(val_x)      
+        self.test_x      = self.norm_state(test_x)
+        self.val_x       = self.norm_state(val_x)
         self.test_traj_x = self.norm_state(test_traj_x)
-        self.val_traj_x  = self.norm_state(val_traj_x) 
+        self.val_traj_x  = self.norm_state(val_traj_x)
 
-        self.train_y     = self.norm_pred(train_y)    
-        self.test_y      = self.norm_pred(test_y)     
-        self.val_y       = self.norm_pred(val_y)      
+        self.train_y     = self.norm_pred(train_y)
+        self.test_y      = self.norm_pred(test_y)
+        self.val_y       = self.norm_pred(val_y)
         self.test_traj_y = self.norm_pred(test_traj_y)
         self.val_traj_y  = self.norm_pred(val_traj_y)
 
@@ -128,7 +128,7 @@ class H5Reader:
         Reads one or more file located inside the provided folder path. After reading
         the files, the data is splited in X (Input of the network) and Y (output of
         the network). Once that is done, sequences and trajectories are generated.
-        Here a sequence is a time ordered list of inputs or output, usually they 
+        Here a sequence is a time ordered list of inputs or output, usually they
         can be seen has a matrices of shape a NxM, where N is the sequence size and
         M is the input/output size. The trajectories are similar except that they
         are meant to be used for iterative predictions hence they are longer.
@@ -175,7 +175,7 @@ class H5Reader:
 
     def split_var(self, x):
         """
-        Splits the data into a K-fold Cross-Validation form where the number of fold is 
+        Splits the data into a K-fold Cross-Validation form where the number of fold is
         ajustable and position of the train the test or the validation set can be changed
         using indices. The numbers of folds and the index of each set can be set in the
         settings object.
@@ -205,7 +205,7 @@ class H5Reader:
         """
         Splits the data into [Train | Val | Test] where the size of the test is a percentage of the whole data
         defined by the setting test_ratio (in the settings object), the size of the val is a percentage of the
-        remaining data defined by val_ratio (in the settings object) and the size of the training set is the 
+        remaining data defined by val_ratio (in the settings object) and the size of the training set is the
         rest of the data.
         Input:
             x : The whole data [N x M x O]
@@ -279,7 +279,7 @@ class H5Reader:
             xy : full dataset in the following format: [N x M] where the timestamp have been removed.
             The data as to be in the form [Input | Output] or [Input | Output + Continuity_idx]
         Output:
-            x : The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
+            x : The inputs in the form [N x Input_dim] or [N x 1 + Input_dim]
             y : The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
         """
         x = xy
@@ -292,12 +292,12 @@ class H5Reader:
         else:
             y = xy[:,:self.sts.output_dim]
             return x, y
-    
+
     def sequence_generator(self, x, y):
         """
         Generates a sequence of data to be fed to the network.
         Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
+           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim]
            y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
         Output:
            nx: Generated sequence in the form [N x Sequence_size x Input_dim]
@@ -305,7 +305,7 @@ class H5Reader:
         """
         nX = []
         nY = []
-        
+
         # Stores the indices of all the variables but the continuity index
         value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
         value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
@@ -329,12 +329,12 @@ class H5Reader:
         nx = np.array(nX)
         ny = np.array(nY)
         return nx, ny
-    
+
     def trajectory_generator(self, x, y):
         """
         Generates a sequence of data to be fed to the network.
         Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
+           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim]
            y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
         Output:
            nx: Generated sequence in the form [N x Sequence_size x Input_dim]
@@ -342,11 +342,11 @@ class H5Reader:
         """
         nX = []
         nY = []
-        
+
         # Stores the indices of all the variables but the continuity index
         value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
         value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
-         
+
         # x is a sequence, y is a sequence right after the sequence used as input
         for i in range(x.shape[0]-1-self.sts.sequence_length-self.sts.trajectory_length):
             # First check continuity of the sequence if the flag is enabled
@@ -404,9 +404,9 @@ class H5Reader_Seq2Seq(H5Reader):
     This object prepares the data (Nomalizes, removes time-stamps, and
     continuity idx), and split it using the settings chosen by the user.
     Since we aim to apply our models to MPC, our models will be
-    evaluated on multistep predictions (build on their predictions) 
+    evaluated on multistep predictions (build on their predictions)
     hence this reader also generates trajectories.
-    
+
     This Reader formats the dataset for seq2seq processing. Here seq2seq
     means that given a sequence of input composed of an history of system
     states and commands sent to it. The output will be an equally long
@@ -419,7 +419,7 @@ class H5Reader_Seq2Seq(H5Reader):
         """
         Generates a sequence of data to be fed to the network in a Seq2Seq fashion.
         Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
+           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim]
            y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
         Output:
            nx: Generated sequence in the form [N x Sequence_size x Input_dim]
@@ -427,11 +427,11 @@ class H5Reader_Seq2Seq(H5Reader):
         """
         nX = []
         nY = []
-        
+
         # Stores the indices of all the variables but the continuity index
         value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
         value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
-        
+
         # x is a sequence, y is the data-point or a sequence right after the sequence used as input
         for i in range(x.shape[0]-1-self.sts.sequence_length-self.sts.forecast):
             # First check continuity of the sequence if the flag is enabled
@@ -451,44 +451,8 @@ class H5Reader_Seq2Seq(H5Reader):
         nx = np.array(nX)
         ny = np.array(nY)
         return nx, ny
-    ''' 
-    def trajectory_generator(self, x, y):
-        """
-        Generates a trajectory of data to be fed to the network in a Seq2Seq fashion.
-        Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
-           y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
-        Output:
-           nx: Generated trajectory in the form [N x Trajectory_size + Sequence_size x Input_dim]
-           ny: Generated trajectory in the form [N x Trajectory_size + Sequence_size x Output_dim]
-        """
-        nX = []
-        nY = []
-        
-        # Stores the indices of all the variables but the continuity index
-        value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
-        value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
-        
-        # x is a sequence, y is the data-point or a sequence right after the sequence used as input
-        for i in range(x.shape[0]-1-self.sts.sequence_length-self.sts.trajectory_length):
-            # First check continuity of the sequence if the flag is enabled
-            if not (self.sts.continuity_idx is None):
-                # 1 sequence is continuous 0 otherwise.
-                vx = x[i:i+self.sts.sequence_length+self.sts.trajectory_length, self.sts.continuity_idx]
-                vy = y[i+1+self.sts.sequence_length:i+1+self.sts.sequence_length+self.sts.trajectory_length, self.sts.continuity_idx]
-                # Check sequence is fine, if not skip sequence.
-                if ((np.max(vx) > 1) or (np.max(vy) > 1)):
-                    continue
-                else:
-                    nX.append(x[i:i+self.sts.sequence_length+self.sts.trajectory_length, value_x_idx])
-                    nY.append(y[i+self.sts.sequence_length:i+self.sts.trajectory_length+self.sts.sequence_length, value_y_idx])
-            else:
-                nX.append(x[i:i+self.sts.sequence_length+self.sts.trajectory_length])
-                nY.append(y[i+self.sts.sequence_length:i+self.sts.sequence_length+self.sts.trajectory_length])
-        nx = np.array(nX)
-        ny = np.array(nY)
-        return nx, ny
-    '''
+
+
 class H5Reader_Seq2Seq_RNN(H5Reader):
     """
     A reader object made to be compatible with our datasets formating:
@@ -496,7 +460,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
     This object prepares the data (Nomalizes, removes time-stamps, and
     continuity idx), and split it using the settings chosen by the user.
     Since we aim to apply our models to MPC, our models will be
-    evaluated on multistep predictions (build on their predictions) 
+    evaluated on multistep predictions (build on their predictions)
     hence this reader also generates trajectories. This reader provides
     support for continuous time RNNs and seq2seq processing.
 
@@ -512,13 +476,13 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
     """
     def __init__(self, settings):
         super(H5Reader_Seq2Seq_RNN, self).__init__(settings)
-    
+
     def load(self, root):
         """
         Reads one or more file located inside the provided folder path. After reading
         the files, the data is splited in X (Input of the network) and Y (output of
         the network). Once that is done, sequences and trajectories are generated.
-        Here a sequence is a time ordered list of inputs or output, usually they 
+        Here a sequence is a time ordered list of inputs or output, usually they
         can be seen has a matrices of shape a NxM, where N is the sequence size and
         M is the input/output size. The trajectories are similar except that they
         are meant to be used for iterative predictions hence they are longer.
@@ -572,10 +536,10 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         numpy_data_y = np.concatenate((data_y), axis=0)
         numpy_seq_c = np.concatenate((seq_continuity), axis=0)
         return numpy_data_x, numpy_data_y, numpy_traj_x, numpy_traj_y, numpy_seq_c
-    
+
     def split_var(self, x, continuity):
         """
-        Splits the data into a K-fold Cross-Validation form where the number of fold is 
+        Splits the data into a K-fold Cross-Validation form where the number of fold is
         ajustable and position of the train the test or the validation set can be changed
         using indices. The numbers of folds and the index of each set can be set in the
         settings object.
@@ -617,12 +581,12 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         train_c = np.concatenate([continuity_split[i] for i in range(self.sts.folds) if i!=self.sts.val_idx], axis=0)
         train_c[0] = False
         return train_x, test_x, val_x, train_c, test_c, val_c
-    
+
     def split_var_ratio(self, x):
         """
         Splits the data into [Train | Val | Test] where the size of the test is a percentage of the whole data
         defined by the setting test_ratio (in the settings object), the size of the val is a percentage of the
-        remaining data defined by val_ratio (in the settings object) and the size of the training set is the 
+        remaining data defined by val_ratio (in the settings object) and the size of the training set is the
         rest of the data.
         Input:
             x : The whole data [N x M x O]
@@ -703,7 +667,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         follow each other without time discontinuity then the continuity boolean
         is set to True, else False.
         Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
+           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim]
            y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
         Output:
            nx: Generated sequence in the form [N x Sequence_size x Input_dim]
@@ -718,7 +682,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         # Stores the indices of all the variables but the continuity index
         value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
         value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
-        
+
         # x is a sequence, y is the data-point or a sequence right after the sequence used as input
         for i in range(0, x.shape[0]-1-self.sts.sequence_length-self.sts.forecast, self.sts.sequence_length):
             # First check continuity of the sequence if the flag is enabled
@@ -744,52 +708,15 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         nx = np.array(nX)
         ny = np.array(nY)
         return nx, ny, seq_c
-    '''
-    def trajectory_generator(self, x, y):
-        """
-        Generates a trajectory of data to be fed to the network in a Seq2Seq fashion.
-        Input:
-           x: The inputs in the form [N x Input_dim] or [N x 1 + Input_dim] 
-           y: The outputs in the form [N x Output_dim] or [N x 1 + Output_dim]
-        Output:
-           nx: Generated trajectory in the form [N x Trajectory_size + Sequence_size x Input_dim]
-           ny: Generated trajectory in the form [N x Trajectory_size + Sequence_size x Output_dim]
-        """
-        nX = []
-        nY = []
-        
-        # Stores the indices of all the variables but the continuity index
-        value_x_idx = [xx for xx in range(x.shape[1])if xx!=self.sts.continuity_idx]
-        value_y_idx = [xx for xx in range(y.shape[1])if xx!=self.sts.continuity_idx]
-        
-        # x is a sequence, y is the data-point or a sequence right after the sequence used as input
-        for i in range(x.shape[0]-1-self.sts.sequence_length-self.sts.trajectory_length):
-            # First check continuity of the sequence if the flag is enabled
-            if not (self.sts.continuity_idx is None):
-                # 1 sequence is continuous 0 otherwise.
-                vx = x[i:i+self.sts.sequence_length+self.sts.trajectory_length, self.sts.continuity_idx]
-                vy = y[i+1+self.sequence_length:i+1+self.sts.sequence_length+self.sts.trajectory_length, self.sts.continuity_idx]
-                # Check sequence is fine, if not skip sequence.
-                if ((np.max(vx) > 1) or (np.max(vy) > 1)):
-                    continue
-                else:
-                    nX.append(x[i:i+self.sts.sequence_length+self.sts.trajectory_length, value_x_idx])
-                    nY.append(y[i+self.sequence_length:i+self.sts.trajectory_length+self.sts.sequence_length, value_y_idx])
-            else:
-                nX.append(x[i:i+self.sts.sequence_length+self.sts.trajectory_length])
-                nY.append(y[i+self.sts.sequence_length:i+self.sts.sequence_length+self.sts.trajectory_length])
-        nx = np.array(nX)
-        ny = np.array(nY)
-        return nx, ny
-    '''
+
     def augment_seq(self, x, y, continuity, size):
         """
         Augments the data by rolling it. As detailed in the description of
         the object our main interest here is to maximise the continuity of
-        our sequences. However, to do that we can not perform one point 
+        our sequences. However, to do that we can not perform one point
         striding, but have to perform a stride of the size of the sequence
         hence the first point of the new sequence is located just after
-        the last point of the previous sequence. To augment our data 
+        the last point of the previous sequence. To augment our data
         we take the whole of our previous dataset shift it one step further
         in time and concatenate it to the previous one. This operation is
         done as much time as there are points in the sequence.
@@ -820,7 +747,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         ny = np.concatenate(ystack,axis = 0)
         nc = np.concatenate(cstack,axis = 0)
         return nc, nx, ny
-    
+
     def load_data(self):
         """
         Build the dataset and splits it based on user input
@@ -844,7 +771,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
             train_x, train_y, test_x, test_y, val_x, val_y, self.test_traj_x, self.test_traj_y, self.val_traj_x, self.val_traj_y  = self.cross_validation_split(train_x, train_y, traj_x, traj_y, seq_c)
         else:
             train_x, train_y, test_x, test_y, val_x, val_y, self.test_traj_x, self.test_traj_y, self.val_traj_x, self.val_traj_y  = self.ratio_based_split(train_x, train_y, traj_x, traj_y, seq_c)
-        
+
         # augment RNNs data
         self.train_sc, self.train_x, self.train_y = self.augment_seq(train_x, train_y, self.train_sc, self.sts.sequence_length)
         self.test_sc, self.test_x, self.test_y = self.augment_seq(test_x, test_y, self.test_sc, self.sts.sequence_length)
