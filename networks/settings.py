@@ -7,67 +7,67 @@ class Settings:
     '''
     def __init__(self):
         # Data and directories
-        self.train_dir   = None 
-        self.test_dir    = None 
-        self.val_dir     = None 
-        self.output_dir  = None 
+        self.train_dir   = None
+        self.test_dir    = None
+        self.val_dir     = None
+        self.output_dir  = None
         self.model_ckpt  = None
-        self.tb_dir      = None 
-        self.tb_log_name = None 
+        self.tb_dir      = None
+        self.tb_log_name = None
         # Tensorboard
         self.allow_tb = None
         # Cross-Validation
-        self.use_X_val  = None 
+        self.use_X_val  = None
         self.folds      = None
-        self.test_ratio = None 
-        self.val_ratio  = None 
-        self.test_idx   = None 
-        self.val_idx    = None 
+        self.test_ratio = None
+        self.val_ratio  = None
+        self.test_idx   = None
+        self.val_idx    = None
         # Priorization settings
         self.priorization = None
         # PER settings
-        self.alpha   = None 
-        self.beta    = None 
-        self.epsilon = None 
+        self.alpha   = None
+        self.beta    = None
+        self.epsilon = None
         self.update_batchsize = None
         self.per_refresh_rate = None
         # Evidential DL settings
-        self.evd_coeff = None 
+        self.evd_coeff = None
         # Grad settings
         self.superbatch_size = None
         # Co-Teaching settings
         self.tau    = None
         self.k_iter = None
         # Data settings
-        self.sequence_length   = None 
+        self.sequence_length   = None
         self.forecast          = None
-        self.trajectory_length = None 
-        self.input_dim         = None 
-        self.output_dim        = None 
-        self.cmd_dim           = None 
-        self.timestamp_idx     = None 
-        self.continuity_idx    = None 
+        self.trajectory_length = None
+        self.input_dim         = None
+        self.output_dim        = None
+        self.cmd_dim           = None
+        self.timestamp_idx     = None
+        self.continuity_idx    = None
         # Reader
         self.reader_mode   = None
         # Training settings
-        self.batch_size      = None 
+        self.batch_size      = None
         self.val_batch_size  = None
         self.test_batch_size = None
-        self.max_iterations  = None 
-        self.log_frequency   = None 
-        self.learning_rate   = None 
+        self.max_iterations  = None
+        self.log_frequency   = None
+        self.learning_rate   = None
         self.dropout         = None
         self.decay_mode      = None
         self.optimizer       = None
-        self.val_traj_batch_size  = None 
-        self.test_traj_batch_size = None 
+        self.val_traj_batch_size  = None
+        self.test_traj_batch_size = None
         # Decay Settings
-        self.decay_steps       = None 
-        self.decay_rate        = None 
-        self.decay_values      = None 
+        self.decay_steps       = None
+        self.decay_rate        = None
+        self.decay_values      = None
         self.decay_boundaries  = None
         self.end_learning_rate = None
-        self.decay_power       = None 
+        self.decay_power       = None
         # Model
         self.model        = None
         self.restore      = None
@@ -122,7 +122,7 @@ class Settings:
         parser.add_argument('--continuity_idx', type=int, required=False, help='Index of the continuity bit if present in the data')
         # Reader
         parser.add_argument('--reader_mode', type=str, default='classic', help='Chose the reader you want to use: classic, seq2seq, continuous_seq2seq')
-        # Training settings 
+        # Training settings
         parser.add_argument('--batch_size', type=int, default='32', help='size of the train batch')
         parser.add_argument('--val_batch_size', type=int, help='size of the validation batch')
         parser.add_argument('--val_traj_batch_size', type=int, default = 1000, help='size of the trajectory validation batch')
@@ -246,18 +246,9 @@ class Settings:
         if (self.val_dir is not None) and (not os.path.isdir(self.val_dir)):
             raise ValueError('Cannot find directory ', self.val_dir)
         # Generates directories
-        try:
-            os.mkdir(self.output_dir)
-        except:
-            pass
-        try:
-            os.mkdir(self.tb_dir)
-        except:
-            pass
-        try:
-            os.mkdir(self.tb_log_name)
-        except:
-            pass
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.tb_dir, exist_ok=True)
+        os.makedirs(self.tb_log_name, exist_ok=True)
 
     def check_X_val(self):
         """
