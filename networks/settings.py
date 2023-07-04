@@ -1,6 +1,19 @@
 import argparse
 import os
 
+
+class DMITException(Exception):
+    """Deep Model Identification Toolbox specific error"""
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class DMITParameterException(DMITException):
+    """Deep Model Identification Toolbox parameter error"""
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
 class Settings:
     '''
     Stores all parameters set by the user + computes a few variables needed for training using them.
@@ -275,53 +288,53 @@ class Settings:
             pass
         elif ((self.priorization == 'per') or (self.priorization == 'PER')):
             if self.alpha is None:
-                raise Exception('Please set the alpha parameter when using the PER')
+                raise DMITParameterException('Please set the alpha parameter when using the PER')
             if self.beta is None:
-                raise Exception('Please set the beta parameter when using the PER')
+                raise DMITParameterException('Please set the beta parameter when using the PER')
             if self.update_batchsize is None:
-                raise Exception('Please set the update_batchsize parameter when using the PER')
+                raise DMITParameterException('Please set the update_batchsize parameter when using the PER')
             if self.per_refresh_rate is None:
-                raise Exception('Please set the per_refresh_rate parameter when using the PER')
+                raise DMITParameterException('Please set the per_refresh_rate parameter when using the PER')
         elif ((self.priorization == 'grad') or (self.priorization == 'GRAD')):
             if self.superbatch_size is None:
-                raise Exception('Please set the superbatch_size parameter when using the GRAD')
+                raise DMITParameterException('Please set the superbatch_size parameter when using the GRAD')
         else:
-            raise Exception('Unknown priorization mode: currently supported mode are uniform (default), GRAD and PER.')
+            raise ValueError('Unknown priorization mode: currently supported mode are uniform (default), GRAD and PER.')
 
     def check_decay(self):
         mode = self.decay_mode.lower()
         if mode == 'exponential':
             if settings.decay_steps is None:
-                raise Exception('Pease set the decay_steps parameter when using exponential decay. As in tf.train.exponential_decay.')
+                raise DMITParameterException('Pease set the decay_steps parameter when using exponential decay. As in tf.train.exponential_decay.')
             if settings.decay_rate is None:
-                raise Exception('Pease set the decay_rate parameter when using exponential decay. As in tf.train.exponential_decay.')
+                raise DMITParameterException('Pease set the decay_rate parameter when using exponential decay. As in tf.train.exponential_decay.')
         elif mode == 'polynomial':
             if settings.decay_steps is None:
-                raise Exception('Pease set the decay_steps parameter when using polynomial decay. As in tf.train.polynomial_decay.')
+                raise DMITParameterException('Pease set the decay_steps parameter when using polynomial decay. As in tf.train.polynomial_decay.')
             if settings.end_learning_rate is None:
-                raise Exception('Pease set the en_learning_rate parameter when using polynomial decay. As in tf.train.polynomial_decay.')
+                raise DMITParameterException('Pease set the en_learning_rate parameter when using polynomial decay. As in tf.train.polynomial_decay.')
             if settings.decay_power is None:
-                raise Exception('Pease set the decay_power parameter when using polynomial decay. As in tf.train.polynomial_decay.')
+                raise DMITParameterException('Pease set the decay_power parameter when using polynomial decay. As in tf.train.polynomial_decay.')
         elif mode == 'inversetime':
             if settings.decay_steps is None:
-                raise Exception('Pease set the decay_steps parameter when using inversetime decay. As in tf.train.inverse_time_decay.')
+                raise DMITParameterException('Pease set the decay_steps parameter when using inversetime decay. As in tf.train.inverse_time_decay.')
             if settings.decay_rate is None:
-                raise Exception('Pease set the decay_rate parameter when using inversetime decay. As in tf.train.inverse_time_decay.')
+                raise DMITParameterException('Pease set the decay_rate parameter when using inversetime decay. As in tf.train.inverse_time_decay.')
         elif mode == 'naturalexp':
             if settings.decay_steps is None:
-                raise Exception('Pease set the decay_steps parameter when using naturalexp decay. As in tf.train.natural_exponential_decay.')
+                raise DMITParameterException('Pease set the decay_steps parameter when using naturalexp decay. As in tf.train.natural_exponential_decay.')
             if settings.decay_rate is None:
-                raise Exception('Pease set the decay_rate parameter when using naturalexp decay. As in tf.train.natural_exponential_decay.')
+                raise DMITParameterException('Pease set the decay_rate parameter when using naturalexp decay. As in tf.train.natural_exponential_decay.')
         elif mode == 'piecewiseconstant':
             if settings.decay_boundaries is None:
-                raise Exception('Pease set the decay_boundaries parameter when using piecewiseconstant decay. As in tf.train.piecewise_constant_decay.')
+                raise DMITParameterException('Pease set the decay_boundaries parameter when using piecewiseconstant decay. As in tf.train.piecewise_constant_decay.')
             if settings.decay_values is None:
-                raise Exception('Pease set the decay_values parameter when using piecewiseconstant decay. As in tf.train.piecewise_constant_decay.')
+                raise DMITParameterException('Pease set the decay_values parameter when using piecewiseconstant decay. As in tf.train.piecewise_constant_decay.')
         elif mode == 'gamma':
             if settings.decay_rate is None:
-                raise Exception('Pease set the decay_steps parameter when using gamma decay.')
+                raise DMITParameterException('Pease set the decay_steps parameter when using gamma decay.')
             if settings.decay_steps is None:
-                raise Exception('Pease set the decay_rate parameter when using gamma decay.')
+                raise DMITParameterException('Pease set the decay_rate parameter when using gamma decay.')
         else:
             raise ValueError('error: unknown decay type. Currently supported types are: none, exponential, polynomial, inversetime, naturalexp, piecewiseconstant, gamma.')
 
