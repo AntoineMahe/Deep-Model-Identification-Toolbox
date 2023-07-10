@@ -48,12 +48,12 @@ class Training_Uniform:
     def load_model(self):
         """
         Calls the network generator to load/generate the requested model.
-        Please note that the generation of models is still experimental 
+        Please note that the generation of models is still experimental
         and may change frequently. For more information have look at the
         network_generator.
         """
         self.M = network_generator.get_graph(self.sts)
-    
+
     def init_records(self):
         """
         Creates empty list to save the output of the network
@@ -84,7 +84,7 @@ class Training_Uniform:
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -103,7 +103,7 @@ class Training_Uniform:
     def eval_on_train(self, i):
         """
         Evaluation Step: Samples a new batch and perform forward pass. The sampler here
-        is independant from the training one. Also logs information about training 
+        is independant from the training one. Also logs information about training
         performance in a list.
         Input:
             i : the current step (int)
@@ -133,7 +133,7 @@ class Training_Uniform:
         Input:
             i : the current step (int)
         """
-        prct, batch_xs , batch_ys = self.SR.sample_val_batch() 
+        prct, batch_xs , batch_ys = self.SR.sample_val_batch()
         # Computes accuracy and loss + acquires summaries
         acc, loss, summaries = self.sess.run([self.M.acc_op, self.M.s_loss, self.M.merged],
                                         feed_dict = {self.M.x: batch_xs,
@@ -155,16 +155,16 @@ class Training_Uniform:
         self.test_writer.add_summary(summaries, i)
         # Return accuracy for console display
         return acc
-    
+
     def run_test_single_step(self):
         """
         Test Step: runs the model on the whole of the test set and performs
         a forward pass.
         """
         try:
-            prct, batch_xs , batch_ys = self.SR.sample_test_batch() 
+            prct, batch_xs , batch_ys = self.SR.sample_test_batch()
         except:
-            batch_xs , batch_ys = self.SR.sample_test_batch() 
+            batch_xs , batch_ys = self.SR.sample_test_batch()
         # Computes accuracy and loss + acquires summaries
         y_ = self.sess.run([self.M.y_], feed_dict = {self.M.x: batch_xs,
                                                      self.M.y: batch_ys,
@@ -174,7 +174,7 @@ class Training_Uniform:
                                                      self.M.is_training: False})
         # Compute RMSE on test set
         self.test_ss_RMSE = np.sqrt(np.mean((np.squeeze(batch_ys) - y_[0])**2,axis=0))
-    
+
     def run_test_on_multi_step(self): # TODO replace i by train_step
         """
         Test on Trajectories: Samples a new batch of trajectories to
@@ -192,8 +192,11 @@ class Training_Uniform:
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
@@ -202,7 +205,7 @@ class Training_Uniform:
         self.test_ms_RMSE = np.sqrt(np.mean((predictions[:,:,:] - batch_y[:,:-1,:])**2,axis=(0,1)))
         per_traj_RMSE = np.sqrt(np.mean((predictions[:,:,:] - batch_y[:,:-1,:])**2,axis=1))
         self.test_ms_STD = np.std(per_traj_RMSE,axis=0)
-    
+
     def get_predictions(self, full, i):
         """
         Get the predictions of the network.
@@ -246,7 +249,7 @@ class Training_Uniform:
             NN_save_name = os.path.join(self.sts.model_ckpt,'Least_Worse_MS')
             self.saver.save(self.sess, NN_save_name)
         return error_x, worse
-        
+
     def eval_on_validation_multi_step(self, i): # TODO replace i by train_step
         """
         Evaluation Step on Trajectories: Samples a new batch of trajectories to
@@ -267,8 +270,11 @@ class Training_Uniform:
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
@@ -318,7 +324,7 @@ class Training_Uniform:
         np.save(self.sts.output_dir + "/test_multi_step_loss_log.npy", np.array(self.test_logs_multi_step))
         np.save(self.sts.output_dir + "/means.npy", self.DS.mean)
         np.save(self.sts.output_dir + "/std.npy", self.DS.std)
-        
+
         # Write networks statistics
         with open(os.path.join(self.sts.output_dir,'statistics.txt'), 'w') as stats:
             stats.write('network parameters: ' + str(self.get_model_parameters()) + os.linesep)
@@ -341,7 +347,7 @@ class Training_Uniform:
                 self.train_step(i)
                 if i%10 == 0:
                     self.eval_on_train(i)
-                if i%self.sts.log_frequency == 0: 
+                if i%self.sts.log_frequency == 0:
                     acc = self.eval_on_validation_single_step(i)
                     acc_t, worse = self.eval_on_validation_multi_step(i)
                 if i%250 == 0:
@@ -357,7 +363,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
     """
     def __init__(self, Settings):
         super(Training_RNN_Seq2Seq, self).__init__(Settings)
-    
+
     def load_dataset(self):
         """
         Instantiate the dataset-reader object based on user inputs.
@@ -370,11 +376,11 @@ class Training_RNN_Seq2Seq(Training_Uniform):
         Instantiate the sampler object
         """
         self.SR = samplers.UniformSampler(self.DS, self.sts)
-    
+
     def load_model(self):
         """
         Calls the network generator to load/generate the requested model.
-        Please note that the generation of models is still experimental 
+        Please note that the generation of models is still experimental
         and may change frequently. For more information have look at the
         network_generator.
         """
@@ -393,7 +399,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -414,7 +420,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
     def eval_on_train(self, i):
         """
         Evaluation Step: Samples a new batch and perform forward pass. The sampler here
-        is independant from the training one. Also logs information about training 
+        is independant from the training one. Also logs information about training
         performance in a list.
         Input:
             i : the current step (int)
@@ -446,7 +452,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
         Input:
             i : the current step (int)
         """
-        prct, batch_xs , batch_ys = self.SR.sample_val_batch() 
+        prct, batch_xs , batch_ys = self.SR.sample_val_batch()
         # Computes accuracy and loss + acquires summaries
         acc, loss, summaries = self.sess.run([self.M.acc_op, self.M.s_loss,
                                               self.M.merged],
@@ -470,8 +476,8 @@ class Training_RNN_Seq2Seq(Training_Uniform):
         self.test_writer.add_summary(summaries, i)
         # Return accuracy for console display
         return acc
-    
-        
+
+
     def get_predictions(self, full, hs, i):
         """
         Get the predictions of the network.
@@ -489,7 +495,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
                                               self.M.is_training: False,
                                               self.M.step: i})
         return pred
-    
+
     def eval_on_validation_multi_step(self, i): # TODO replace i by train_step
         """
         Evaluation Step on Trajectories: Samples a new batch of trajectories to
@@ -512,14 +518,17 @@ class Training_RNN_Seq2Seq(Training_Uniform):
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
         predictions = np.concatenate(predictions, axis = 1)
         return self.eval_multistep(predictions, batch_y, i)
-    
+
     def run_test_on_multi_step(self): # TODO replace i by train_step
         """
         Test on Trajectories: Samples a new batch of trajectories to
@@ -539,8 +548,11 @@ class Training_RNN_Seq2Seq(Training_Uniform):
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
@@ -549,16 +561,16 @@ class Training_RNN_Seq2Seq(Training_Uniform):
         self.test_ms_RMSE = np.sqrt(np.mean((predictions[:,:,:] - batch_y[:,:-1,:])**2,axis=(0,1)))
         per_traj_RMSE = np.sqrt(np.mean((predictions[:,:,:] - batch_y[:,:-1,:])**2,axis=1))
         self.test_ms_STD = np.std(per_traj_RMSE,axis=0)
-    
+
     def run_test_single_step(self):
         """
         Test Step: runs the model on the whole of the test set and performs
         a forward pass.
         """
         try:
-            prct, batch_xs , batch_ys = self.SR.sample_test_batch() 
+            prct, batch_xs , batch_ys = self.SR.sample_test_batch()
         except:
-            batch_xs , batch_ys = self.SR.sample_test_batch() 
+            batch_xs , batch_ys = self.SR.sample_test_batch()
         # Computes accuracy and loss + acquires summaries
         y_ = self.sess.run([self.M.y_], feed_dict = {self.M.x: batch_xs,
                                                      self.M.y: batch_ys,
@@ -570,7 +582,7 @@ class Training_RNN_Seq2Seq(Training_Uniform):
         # Compute RMSE on test set
         batch_ys = batch_ys[:,-1,:]
         self.test_ss_RMSE = np.sqrt(np.mean((batch_ys - y_[0][:,-1,:])**2,axis=0))
-    
+
 
 class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
     """
@@ -579,7 +591,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
     """
     def __init__(self, Settings):
         super(Training_RNN_Continuous_Seq2Seq, self).__init__(Settings)
-    
+
     def load_dataset(self):
         """
         Instantiate the dataset-reader object based on user inputs.
@@ -592,11 +604,11 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
         Instantiate the sampler object
         """
         self.SR = samplers.RNNSampler(self.DS, self.sts)
-    
+
     def load_model(self):
         """
         Calls the network generator to load/generate the requested model.
-        Please note that the generation of models is still experimental 
+        Please note that the generation of models is still experimental
         and may change frequently. For more information have look at the
         network_generator.
         """
@@ -615,7 +627,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -637,7 +649,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
     def eval_on_train(self, i):
         """
         Evaluation Step: Samples a new batch and perform forward pass. The sampler here
-        is independant from the training one. Also logs information about training 
+        is independant from the training one. Also logs information about training
         performance in a list.
         Input:
             i : the current step (int)
@@ -670,7 +682,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
         Input:
             i : the current step (int)
         """
-        prct, batch_xs , batch_ys, continuity = self.SR.sample_val_batch() 
+        prct, batch_xs , batch_ys, continuity = self.SR.sample_val_batch()
         self.val_hs = np.swapaxes(np.swapaxes(self.val_hs,-2,-1)*continuity,-2,-1)
         # Computes accuracy and loss + acquires summaries
         acc, loss, summaries, self.val_hs = self.sess.run([self.M.acc_op, self.M.s_loss,
@@ -695,7 +707,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
         self.test_writer.add_summary(summaries, i)
         # Return accuracy for console display
         return acc
-    
+
     def get_predictions(self, full, hs, i):
         """
         Get the predictions of the network.
@@ -713,7 +725,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
                                               self.M.is_training: False,
                                               self.M.step: i})
         return pred, hs
-    
+
     def eval_on_validation_multi_step(self, i): # TODO replace i by train_step
         """
         Evaluation Step on Trajectories: Samples a new batch of trajectories to
@@ -736,14 +748,17 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
         predictions = np.concatenate(predictions, axis = 1)
         return self.eval_multistep(predictions, batch_y, i)
-    
+
     def run_test_on_multi_step(self): # TODO replace i by train_step
         """
         Test on Trajectories: Samples a new batch of trajectories to
@@ -763,8 +778,11 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
             predictions.append(np.expand_dims(pred, axis=1))
             # Remove first elements of old batch add predictions
             # concatenated with the next command input
-            cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
-            new = np.concatenate((pred, cmd), axis=1)
+            if self.sts.cmd_dim > 0:
+                cmd = batch_x[:, k+1, -self.sts.cmd_dim:]
+                new = np.concatenate((pred, cmd), axis=1)
+            else:
+                new = pred
             new = np.expand_dims(new, axis=1)
             old = full[:,1:,:]
             full = np.concatenate((old,new), axis=1)
@@ -777,7 +795,7 @@ class Training_RNN_Continuous_Seq2Seq(Training_RNN_Seq2Seq):
 class Training_Seq2Seq(Training_Uniform):
     def __init__(self, Settings):
         super(Training_Seq2Seq, self).__init__(Settings)
-    
+
     def load_dataset(self):
         """
         Instantiate the dataset-reader object.
@@ -805,16 +823,16 @@ class Training_Seq2Seq(Training_Uniform):
                                                      self.M.is_training: False,
                                                      self.M.step: i})
         return pred
-    
+
     def run_test_single_step(self):
         """
         Test Step: runs the model on the whole of the test set and performs
         a forward pass.
         """
         try:
-            prct, batch_xs , batch_ys = self.SR.sample_test_batch() 
+            prct, batch_xs , batch_ys = self.SR.sample_test_batch()
         except:
-            batch_xs , batch_ys = self.SR.sample_test_batch() 
+            batch_xs , batch_ys = self.SR.sample_test_batch()
         # Computes accuracy and loss + acquires summaries
         y_ = self.sess.run([self.M.y_], feed_dict = {self.M.x: batch_xs,
                                                      self.M.y: batch_ys,
@@ -834,17 +852,17 @@ class Training_PER(Training_Uniform):
     """
     def __init__(self, Settings):
         super(Training_PER, self).__init__(Settings)
-    
+
     def load_sampler(self):
         """
         Instantiate the sampler object
         """
         self.SR = samplers.PERSampler(self.DS, self.sts)
-    
+
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -886,17 +904,17 @@ class Training_Seq2Seq_PER(Training_Seq2Seq):
     """
     def __init__(self, Settings):
         super(Training_Seq2Seq_PER, self).__init__(Settings)
-    
+
     def load_sampler(self):
         """
         Instantiate the sampler object
         """
         self.SR = samplers.PERSampler(self.DS, self.sts)
-    
+
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -938,17 +956,17 @@ class Training_GRAD(Training_Uniform):
     """
     def __init__(self, Settings):
         super(Training_GRAD, self).__init__(Settings)
-    
+
     def load_sampler(self):
         """
         Instantiate the sampler object
         """
         self.SR = samplers.GRADSampler(self.DS, self.sts)
-   
+
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         This training step leverages the Gradient-UpperBound priorization
@@ -1002,17 +1020,17 @@ class Training_CoTeaching(Training_Uniform):
     def load_model(self):
         """
         Calls the network generator to load/generate the requested model.
-        Please note that the generation of models is still experimental 
+        Please note that the generation of models is still experimental
         and may change frequently. For more information have look at the
         network_generator.
         """
         self.M = network_generator.get_graph(self.sts, name='net1')
         self.M_2 = network_generator.get_graph(self.sts, name='net2')
-    
+
     def train_step(self, i):
         """
         Training step: Samples a new batch, perform forward and backward pass.
-        Please note that the networks take a large amount of placeholders as 
+        Please note that the networks take a large amount of placeholders as
         input. They are not necessarily used they are here to maximize
         compatibility between the differemt models, and priorization schemes.
         Input:
@@ -1059,7 +1077,7 @@ class Training_CoTeaching(Training_Uniform):
     def eval_on_train(self, i):
         """
         Evaluation Step: Samples a new batch and perform forward pass. The sampler here
-        is independant from the training one. Also logs information about training 
+        is independant from the training one. Also logs information about training
         performance in a list.
         Input:
             i : the current step (int)
