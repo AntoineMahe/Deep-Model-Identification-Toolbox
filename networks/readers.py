@@ -1,6 +1,7 @@
 import os
 import h5py as h5
 import numpy as np
+import pandas as pd
 import csv
 
 #TODO Unify sequence_generator and trajectory generator
@@ -72,7 +73,10 @@ class H5Reader:
         Output:
             y: the same vector but normalized [N x Forecast_size x Ouput_size]
         """
-        return (y - self.mean[:-self.sts.cmd_dim]) / self.std[:-self.sts.cmd_dim]
+        if self.sts.cmd_dim > 0:
+            return (y - self.mean[:-self.sts.cmd_dim]) / self.std[:-self.sts.cmd_dim]
+        else:
+            return (y - self.mean) / self.std
 
     def normalize(self, train_x, train_y, test_x, test_y, val_x, val_y, test_traj_x, test_traj_y, val_traj_x, val_traj_y):
         """
@@ -152,9 +156,12 @@ class H5Reader:
         data_traj_y = []
         for i in files:
             # Load file
-            tmp = self.read_file(os.path.join(root,i))
-            # Remove time-stamp if need be
-            tmp = self.remove_ts(tmp)
+            if self.sts.pandas:
+                tmp = pd.read_hdf(os.path.join(root,i), key="train_X", mode='r').to_numpy()
+            else:
+                tmp = self.read_file(os.path.join(root,i))
+                # Remove time-stamp if need be
+                tmp = self.remove_ts(tmp)
             # split the input and targets
             tmp_x, tmp_y = self.split_input_output(tmp)
             # generate trajectories
@@ -483,7 +490,7 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         the files, the data is splited in X (Input of the network) and Y (output of
         the network). Once that is done, sequences and trajectories are generated.
         Here a sequence is a time ordered list of inputs or output, usually they
-        can be seen has a matrices of shape a NxM, where N is the sequence size and
+        can be seen has matrices of shape NxM, where N is the sequence size and
         M is the input/output size. The trajectories are similar except that they
         are meant to be used for iterative predictions hence they are longer.
         Continuous RNN modification inolve handling inter-sequence/trajectories
@@ -515,9 +522,12 @@ class H5Reader_Seq2Seq_RNN(H5Reader):
         traj_continuity = []
         for i in files:
             # Load file
-            tmp = self.read_file(os.path.join(root,i))
-            # Remove time-stamp if need be
-            tmp = self.remove_ts(tmp)
+            if self.sts.pandas:
+                tmp = pd.read_hdf(os.path.join(root,i), key="train_X", mode='r').to_numpy()
+            else:
+                tmp = self.read_file(os.path.join(root,i))
+                # Remove time-stamp if need be
+                tmp = self.remove_ts(tmp)
             # split the input and targets
             tmp_x, tmp_y = self.split_input_output(tmp)
             # generate trajectories

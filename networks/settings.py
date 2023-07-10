@@ -21,6 +21,7 @@ class Settings:
     def __init__(self):
         # Data and directories
         self.train_dir   = None
+        self.pandas   = False
         self.test_dir    = None
         self.val_dir     = None
         self.output_dir  = None
@@ -96,6 +97,7 @@ class Settings:
         parser = argparse.ArgumentParser()
         # Data and directories
         parser.add_argument('--train_data',type=str, help='path to the train data folder to be used')
+        parser.add_argument('--pandas', type=bool, default=False, help='if H5 as been save as pandas dataframe')
         parser.add_argument('--test_data',type=str, required=False, help='path to the test data folder to be used')
         parser.add_argument('--val_data',type=str, required=False, help='path to the validation data folder to be used')
         parser.add_argument('--output', type=str, default='./result', help='path to the folder to save file to')
@@ -168,6 +170,7 @@ class Settings:
         """
         # Data and directories
         self.train_dir   = args.train_data
+        self.pandas   = args.pandas
         self.test_dir    = args.test_data
         self.val_dir     = args.val_data
         self.output_dir  = args.output

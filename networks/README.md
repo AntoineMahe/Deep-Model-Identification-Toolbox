@@ -84,7 +84,7 @@ it will use the whole of the test set.
 - **--learning\_rate** *LearningRate* ``float``. The learning rate value: Typical value 0.001.
 - **--dropout** *Dropout* ``float`` **OPTIONAL**. The dropout value if it is not used then don't set it.
 
-
+# TODO add hdf key as of now all data from h5 file is gather from the "train_X" key.
 
 > Please note that as of today forecasting farther than 1 time step is not well supported.
 Please leave this setting to one.

@@ -68,5 +68,11 @@ In this case the CNNs seems to like the PRELU, but for the rest of the networks 
 Clearly our implementation of Co-Teaching does not work as intended. This is to be expected as it was
  originally designed for classification problems and not regression. It could also be that our dataset is not noisy enough.
 
+### Running within docker
+
+# TODO : add user and automount data directory
+ -p for port forwarding hostport:dockerport > allow to access tensorboard from outside the docker.
+ -it for interactive session and using test image.
+ - ``docker run -p 0.0.0.0:7007:6006 -it test``
 
 
