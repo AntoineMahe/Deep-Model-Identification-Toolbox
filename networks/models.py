@@ -4,7 +4,7 @@ from tensorflow.keras import layers as Layers
 from activations import *
 from losses import *
 
-    
+
 def accuracy(est, gt):
     with tf.name_scope('accuracy_op'):
         accuracy = RMSE(est, gt)
@@ -91,7 +91,7 @@ class GraphATTNSP:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_, self.yr)
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -168,7 +168,7 @@ class GraphATTNMP(GraphATTNSP):
         # Train
         self.grad = tf.norm(tf.gradients(self.seq_loss, self.ys_),axis=2)
         self.acc_op = accuracy(self.y_, self.y[:,-1,:])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -232,7 +232,7 @@ class GraphATTNMPMH(GraphATTNSP):
         # Train
         self.grad = tf.norm(tf.gradients(self.seq_loss, self.ys_),axis=2)
         self.acc_op = accuracy(self.y_, self.y[:,-1,:])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -302,7 +302,7 @@ class GraphATTNMPMH_PHY(GraphATTNSP):
         # Train
         #self.grad = tf.norm(tf.gradients(self.seq_loss, self.ys_),axis=2)
         self.acc_op = accuracy(self.y_, self.y[:,-1,:])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -311,7 +311,7 @@ class GraphMLP:
     MLP.
     """
     def __init__(self, settings, layers, params, act='RELU'):
-       
+
         # PLACEHOLDERS
         self.x = tf.placeholder(tf.float32, shape=[None, settings.sequence_length,  settings.input_dim], name='inputs')
         self.y = tf.placeholder(tf.float32, shape=[None, settings.forecast, settings.output_dim], name='target')
@@ -353,7 +353,7 @@ class GraphEvdMLP:
     MLP.
     """
     def __init__(self, settings, layers, params, act='RELU'):
-       
+
         # PLACEHOLDERS
         self.x = tf.placeholder(tf.float32, shape=[None, settings.sequence_length,  settings.input_dim], name='inputs')
         self.y = tf.placeholder(tf.float32, shape=[None, settings.forecast, settings.output_dim], name='target')
@@ -396,7 +396,7 @@ class GraphMLP_PHY:
     MLP with state space and adaptive control inspiration.
     """
     def __init__(self, settings, layers, params, act='RELU'):
-       
+
         # PLACEHOLDERS
         self.x = tf.placeholder(tf.float32, shape=[None, settings.sequence_length,  settings.input_dim], name='inputs')
         self.y = tf.placeholder(tf.float32, shape=[None, settings.forecast, settings.output_dim], name='target')
@@ -432,7 +432,7 @@ class GraphMLP_PHY:
         # Train
         #self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_, self.yr)
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -441,7 +441,7 @@ class GraphMLP_EN:
     MLP.
     """
     def __init__(self, settings, layers, params, act='RELU'):
-       
+
         # PLACEHOLDERS
         self.x = tf.placeholder(tf.float32, shape=[None, settings.sequence_length,  settings.input_dim], name='inputs')
         self.y = tf.placeholder(tf.float32, shape=[None, settings.forecast, settings.output_dim], name='target')
@@ -509,7 +509,7 @@ class GraphMLP_EN:
         # Train
         #self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_, self.yr)
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -576,7 +576,7 @@ class GraphMLP_CPLX:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_, self.yr)
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -623,7 +623,7 @@ class GraphCNN:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_, self.yr)
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -642,8 +642,8 @@ class GraphRNN:
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.drop_rate = tf.placeholder(tf.float32, name='keep_prob')
         self.weights = tf.placeholder(tf.float32, shape=[None], name='weights')
-       
-        # Hidden-State definition 
+
+        # Hidden-State definition
         self.rnn_tuple_state = tuple([self.hs[idx] for idx in range(recurrent_layers)])
         stacked_rnn = []
         for _ in range(recurrent_layers):
@@ -683,7 +683,7 @@ class GraphRNN:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_[-1], self.y[-1])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
 
@@ -705,8 +705,8 @@ class GraphGRU:
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.drop_rate = tf.placeholder(tf.float32, name='keep_prob')
         self.weights = tf.placeholder(tf.float32, shape=[None], name='weights')
-       
-        # Hidden-State definition 
+
+        # Hidden-State definition
         self.rnn_tuple_state = tuple([self.hs[idx] for idx in range(recurrent_layers)])
         stacked_rnn = []
         for _ in range(recurrent_layers):
@@ -746,10 +746,10 @@ class GraphGRU:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_[-1], self.y[-1])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
-    
+
     def get_hidden_state(self, batch_size):
         return np.zeros((self.v_recurrent_layers, batch_size, self.v_hidden_state))
 
@@ -768,8 +768,8 @@ class GraphLSTM:
         self.is_training = tf.placeholder(tf.bool, name='is_training')
         self.drop_rate = tf.placeholder(tf.float32, name='keep_prob')
         self.weights = tf.placeholder(tf.float32, shape=[None], name='weights')
-       
-        # Hidden-State definition 
+
+        # Hidden-State definition
         state_per_layer_list = tf.unstack(self.hs, axis=0)
         self.rnn_tuple_state = tuple(
                 [tf.nn.rnn_cell.LSTMStateTuple(state_per_layer_list[idx][0], state_per_layer_list[idx][1])
@@ -812,10 +812,10 @@ class GraphLSTM:
         # Train
         self.grad = tf.norm(tf.gradients(self.s_loss, self.y_),axis=2)
         self.acc_op = accuracy(self.y_[-1], self.y[-1])
-        self.train_step = train_fn(self.w_loss, settings.learning_rate)
+        self.train_step = train_fn(self.w_loss, settings.learning_rate, self.step, settings)
         # Tensorboard
         self.merged = tf.summary.merge_all()
-    
+
     def get_hidden_state(self, batch_size):
         return np.zeros((self.v_recurrent_layers, 2, batch_size, self.v_hidden_state))
 
